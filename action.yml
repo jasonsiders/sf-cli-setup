@@ -4,6 +4,9 @@ branding:
   icon: 'terminal'
   color: 'blue'
 inputs:
+  plugins:
+    description: "A comma-separated list of plugins to be installed, if not already present"
+    required: false
   version:
     description: Version of CLI to be installed
     required: false
@@ -40,4 +43,18 @@ runs:
       shell: bash
       run: |
         echo "CLI Installed with version: $(sf --version)"
+
+    - name: Install plugins
+      shell: bash 
+      run: |
+        # Installs the provided list of plugins, if not already installed in the cached sf cli:
+        IFS=',' read -ra PLUGINS <<< "${{ inputs.plugins }}"
+        for plugin in "${PLUGINS[@]}"; do
+          if ! sf plugins --core --json | grep -q "\"name\": \"${plugin}\""; then
+            echo "Installing ${plugin}..."
+            echo y | sf plugins install "${plugin}" --silent
+          else
+            echo "${plugin} is already installed"
+          fi
+        done
 
